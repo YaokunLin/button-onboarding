@@ -8,6 +8,7 @@ app.use(
             graphiql: true,
             enhanceGraphiql: true,
             allowExplain: true,
+            exportGqlSchemaPath:"schema.graphql"
         }
     )
 );
