@@ -2,9 +2,11 @@ import './App.css';
 import graphql from 'babel-plugin-relay/macro';
 import { useFragment, useMutation } from 'react-relay';
 import { TodoFragment$key } from './__generated__/TodoFragment.graphql';
+import { RecordSourceSelectorProxy } from 'relay-runtime/lib/store/RelayStoreTypes';
 
 const TodoFragment = graphql`
   fragment TodoFragment on Todo {
+    __id
     taskUid
     completed
     dateCreated
@@ -19,7 +21,7 @@ const TodoMutation = graphql`
     $taskUid: UUID!,
     $completed: Boolean!,
 
-  ) {
+  ) @raw_response_type {
     updateTodoByTaskUid(
       input: {todoPatch: {completed: $completed}, taskUid: $taskUid}
     ) {
@@ -41,30 +43,36 @@ function Todo({todoProp} : Props) {
     todoProp,
   );
   const [commitMutation, isMutationInFlight] = useMutation(TodoMutation);
-  function handleCheckboxClicked() {
-    console.log("checked", {
+  const handleOnChange = () => commitMutation({
+    variables: {
       taskUid: todo.taskUid,
       completed: !todo.completed,
-    })
-    commitMutation({
-      variables: {
-        taskUid: todo.taskUid,
-        completed: !todo.completed,
-      },
-    })
-  }
+    },
+    updater: (store: RecordSourceSelectorProxy) => {
+      const payload = store.getRootField('updateTodoByTaskUid');
+      if (payload && todo) {
+        const updatedTodo = payload.getLinkedRecord('todo');
+        console.log(updatedTodo)
+        if (updatedTodo && todo.__id) {
+          const cachedTodo = store.get(todo.__id);
+          console.log(cachedTodo)
+          if (cachedTodo) {
+            cachedTodo.copyFieldsFrom(updatedTodo);
+          }
+        }
+      }
+    },
+  })
 
-  console.log(todo)
 
   return (
     <tr style={{background:todo.completed? "green": "red"}}>
       <th>
         <input 
               type="checkbox" 
-              id="vehicle1" 
               name={todo.task} 
               checked={todo.completed ? true : false} 
-              onChange={handleCheckboxClicked}
+              onChange={handleOnChange}
               disabled={isMutationInFlight}
         />
       </th>

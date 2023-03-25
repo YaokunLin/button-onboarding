@@ -29,7 +29,7 @@ function Todos() {
   }
 
   const todos = allTodos.edges
-  console.log(todos);
+
   return (
     <table style={{width:"100%"}}>
 
