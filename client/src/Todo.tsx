@@ -34,7 +34,7 @@ const TodoMutation = graphql`
   }
 `;
 
-const DeleteTodoMutation = graphql`
+/* const DeleteTodoMutation = graphql`
   mutation DeleteTodoMutation($taskUid: UUID!) {
     deleteTodoByTaskUid(input: { taskUid: $taskUid }) {
       todo {
@@ -42,7 +42,7 @@ const DeleteTodoMutation = graphql`
       }
     }
   }
-`;
+`; */
 
 type Props = {
   todoProp: TodoFragment$key;
@@ -57,7 +57,7 @@ function Todo({todoProp} : Props) {
   const [commitMutation, isMutationInFlight] = useMutation(TodoMutation);
   const [taskTxt, setTaskTxt] = useState(fetchedTodo.task);
   const [isCompleted, setIsCompleted] = useState(fetchedTodo.completed);
-  const [deleteMutation, isDeleteMutationInFlight] = useMutation(DeleteTodoMutation);
+  /* const [deleteMutation, isDeleteMutationInFlight] = useMutation(DeleteTodoMutation); */
 
   const handleOnChange = () => commitMutation({
     variables: {
@@ -66,7 +66,7 @@ function Todo({todoProp} : Props) {
       task: taskTxt,
     },
     updater: (store: RecordSourceSelectorProxy, response: any) => {
-      console.log(response.updateTodoByTaskUid.todo)
+      console.log("updated")
       const payload = store.getRootField('updateTodoByTaskUid');
       if (payload && fetchedTodo) {
         const updatedTodo = payload.getLinkedRecord('todo');
@@ -85,7 +85,7 @@ function Todo({todoProp} : Props) {
 
  
 
-  const handleDelete = () => {
+  /* const handleDelete = () => {
     deleteMutation({
       variables: {
         taskUid: fetchedTodo.taskUid,
@@ -93,13 +93,14 @@ function Todo({todoProp} : Props) {
       updater: (store: RecordSourceSelectorProxy) => {
         const userRecord = store.getRoot();
         const todosConnection = ConnectionHandler.getConnection(userRecord, 'TodosQuery_allTodos');
+        console.log(fetchedTodo.__id)
 
         if (todosConnection) {
           ConnectionHandler.deleteNode(todosConnection, fetchedTodo.__id);
         }
       },
     });
-  };
+  }; */
 
 
   return (
@@ -134,12 +135,12 @@ function Todo({todoProp} : Props) {
       
 
       <th>
-          <button 
+          {/* <button 
             onClick={handleDelete}
             disabled={isDeleteMutationInFlight}
             >
               X
-          </button>
+          </button> */}
       </th>
       
       

@@ -11,10 +11,11 @@ const TodosQuery = graphql`
 query TodosQuery($count: Int)  
 {
   allTodos(first: $count) @connection(key: "TodosQuery_allTodos") {
+    __id
     edges {
       node {
         ...TodoFragment
-        ...CreateNewFragment
+        task
       }
     }
   }
@@ -27,13 +28,16 @@ function Todos() {
     {count: 100},
   );
   const allTodos = data.allTodos;
+  
 
   if (allTodos == null){
     return <>no more todos</>
   }
 
+  /* console.log(allTodos?.__id) */
+
   const todos = allTodos.edges
-  console.log(data)
+  console.log(allTodos)
 
   return (
     <>
@@ -54,7 +58,7 @@ function Todos() {
 
       </table>
     
-       {todos[0].node && <CreateNew createNewProp={todos[0]?.node}  /> }
+       <CreateNew  /> 
     </>
   
     

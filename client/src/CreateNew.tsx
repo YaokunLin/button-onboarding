@@ -6,17 +6,6 @@ import { RecordSourceSelectorProxy } from 'relay-runtime/lib/store/RelayStoreTyp
 import { useState } from 'react';
 import { CreateNewFragment$key } from './__generated__/CreateNewFragment.graphql';
 
-const CreateNewFragment = graphql`
-  fragment CreateNewFragment on Todo {
-    __id
-    completed
-    dateCreated
-    dateUpdated
-    nodeId
-    task
-    taskUid
-  }
-`;
 
 const CreateNewMutation = graphql`
   mutation CreateNewMutation(
@@ -26,9 +15,15 @@ const CreateNewMutation = graphql`
     createTodo(
       input: {todo: {completed: $completed, task:$task}}
     ) {
-      todoEdge @prependEdge(connections: "TodosQuery_allTodos") {
+      todoEdge @appendEdge(connections: ["client:root:__TodosQuery_allTodos_connection"]) {
+     
         node {
-          ...CreateNewFragment
+          taskUid
+          completed
+          dateCreated
+          dateUpdated
+          userUid
+          task
         }
       }
     }
@@ -40,41 +35,31 @@ type Props = {
   };
 
 
-function CreateNew({createNewProp} : Props) {
-  const fetchedTodo = useFragment(
-    CreateNewFragment,
-    createNewProp,
-  );
+function CreateNew() {
   const [taskTxt, setTaskTxt] = useState("")
+ 
 
   const [commitMutation, isMutationInFlight] = useMutation(CreateNewMutation);
   function onPost() {
     setTaskTxt(''); 
+
+    const connectionId = ConnectionHandler.getConnectionID(
+      'root',
+      'TodosQuery_allTodos'
+  )
+
+  console.log(connectionId)
     
     commitMutation({
       variables: {
         completed: false,
         task: taskTxt,
       },
-      updater: (store: RecordSourceSelectorProxy, response: any) => {
-        const payload = store.getRootField('createTodo');
-        if (payload) {
-          const newTodoEdge = payload.getLinkedRecord('todoEdge');
-          const userRecord = store.getRoot();
-          const todosConnection = ConnectionHandler.getConnection(userRecord, 'TodosQuery_allTodos');
-      
-          if (todosConnection && newTodoEdge) {
-            ConnectionHandler.insertEdgeBefore(todosConnection, newTodoEdge);
-          }
-        }
-      }
+      onCompleted:(c)=>{
+        console.log(c)
+      },
     })
   }
-
-  
-  
-
-
 
   return (
           <>
