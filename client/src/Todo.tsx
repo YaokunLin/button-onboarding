@@ -85,7 +85,6 @@ function Todo({todoProp} : Props) {
       updater: (store: RecordSourceSelectorProxy) => {
         const userRecord = store.getRoot();
         const todosConnection = ConnectionHandler.getConnection(userRecord, 'TodosQuery_allTodos');
-        console.log(fetchedTodo.__id)
 
         if (todosConnection) {
           ConnectionHandler.deleteNode(todosConnection, fetchedTodo.__id);

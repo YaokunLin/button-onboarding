@@ -15,7 +15,7 @@ query TodosQuery($count: Int)
     edges {
       node {
         ...TodoFragment
-        task
+        taskUid
       }
     }
   }
@@ -37,24 +37,29 @@ function Todos() {
   /* console.log(allTodos?.__id) */
 
   const todos = allTodos.edges
-  console.log(allTodos)
+  console.log(todos)
 
   return (
     <>
 
       <table style={{width:"100%"}}>
 
-      <tr>
-        <th></th>
-        <th>isCompleted/task</th>
-      </tr>
+      <thead>
+        <tr>
+          <th></th>
+          <th>isCompleted/task</th>
+        </tr>
+      </thead>
 
+      
+      <tbody>
         {todos?.map(todo => {
           if(todo.node){
-            return <Todo todoProp={todo.node}/>
+            return <Todo todoProp={todo.node} key={todo.node.taskUid}/>
           }
           return <></>
         })}
+      </tbody>
 
       </table>
     
