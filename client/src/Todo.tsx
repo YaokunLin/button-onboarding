@@ -4,6 +4,7 @@ import { ConnectionHandler, useFragment, useMutation } from 'react-relay';
 import { TodoFragment$key } from './__generated__/TodoFragment.graphql';
 import { RecordSourceSelectorProxy } from 'relay-runtime/lib/store/RelayStoreTypes';
 import { useState } from 'react';
+import { DeleteTodoMutation } from './mutations/DeleteTodoMutation';
 
 const TodoFragment = graphql`
   fragment TodoFragment on Todo {
@@ -34,15 +35,7 @@ const TodoMutation = graphql`
   }
 `;
 
-/* const DeleteTodoMutation = graphql`
-  mutation DeleteTodoMutation($taskUid: UUID!) {
-    deleteTodoByTaskUid(input: { taskUid: $taskUid }) {
-      todo {
-        taskUid
-      }
-    }
-  }
-`; */
+
 
 type Props = {
   todoProp: TodoFragment$key;
@@ -57,8 +50,7 @@ function Todo({todoProp} : Props) {
   const [commitMutation, isMutationInFlight] = useMutation(TodoMutation);
   const [taskTxt, setTaskTxt] = useState(fetchedTodo.task);
   const [isCompleted, setIsCompleted] = useState(fetchedTodo.completed);
-  /* const [deleteMutation, isDeleteMutationInFlight] = useMutation(DeleteTodoMutation); */
-
+  const [deleteMutation, isDeleteMutationInFlight] = useMutation(DeleteTodoMutation);
   const handleOnChange = () => commitMutation({
     variables: {
       taskUid: fetchedTodo.taskUid,
@@ -85,7 +77,7 @@ function Todo({todoProp} : Props) {
 
  
 
-  /* const handleDelete = () => {
+  const handleDelete = () => {
     deleteMutation({
       variables: {
         taskUid: fetchedTodo.taskUid,
@@ -100,7 +92,7 @@ function Todo({todoProp} : Props) {
         }
       },
     });
-  }; */
+  };
 
 
   return (
@@ -135,12 +127,12 @@ function Todo({todoProp} : Props) {
       
 
       <th>
-          {/* <button 
+          <button 
             onClick={handleDelete}
             disabled={isDeleteMutationInFlight}
             >
               X
-          </button> */}
+          </button>
       </th>
       
       

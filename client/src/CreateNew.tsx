@@ -11,11 +11,12 @@ const CreateNewMutation = graphql`
   mutation CreateNewMutation(
     $completed: Boolean!,
     $task: String!
+    $connections: [ID!]!,
   ) {
     createTodo(
       input: {todo: {completed: $completed, task:$task}}
     ) {
-      todoEdge @appendEdge(connections: ["client:root:__TodosQuery_allTodos_connection"]) {
+      todoEdge @appendEdge(connections: $connections) {
      
         node {
           taskUid
@@ -54,6 +55,7 @@ function CreateNew() {
       variables: {
         completed: false,
         task: taskTxt,
+        connections: [connectionId],
       },
       onCompleted:(c)=>{
         console.log(c)
