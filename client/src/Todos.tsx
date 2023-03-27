@@ -4,13 +4,17 @@ import graphql from 'babel-plugin-relay/macro';
 import { useLazyLoadQuery } from 'react-relay';
 import type {TodosQuery as TodosQueryType} from './__generated__/TodosQuery.graphql';
 import Todo from './Todo';
+import CreateNew from './CreateNew';
+
 
 const TodosQuery = graphql`
-query TodosQuery {
-  allTodos {
+query TodosQuery($count: Int)  
+{
+  allTodos(first: $count) @connection(key: "TodosQuery_allTodos") {
     edges {
       node {
         ...TodoFragment
+        ...CreateNewFragment
       }
     }
   }
@@ -20,7 +24,7 @@ query TodosQuery {
 function Todos() {
   const data = useLazyLoadQuery<TodosQueryType>(
     TodosQuery,
-    {},
+    {count: 100},
   );
   const allTodos = data.allTodos;
 
@@ -29,24 +33,31 @@ function Todos() {
   }
 
   const todos = allTodos.edges
+  console.log(data)
 
   return (
-    <table style={{width:"100%"}}>
+    <>
 
-    <tr>
-      <th>isCompleted</th>
-      <th>task</th>
-    </tr>
+      <table style={{width:"100%"}}>
 
-      {todos?.map(todo => {
-        if(todo && todo.node){
-          return <Todo todoProp={todo.node}/>
-        }
+      <tr>
+        <th></th>
+        <th>isCompleted/task</th>
+      </tr>
 
-        return <></>
-      })}
+        {todos?.map(todo => {
+          if(todo.node){
+            return <Todo todoProp={todo.node}/>
+          }
+          return <></>
+        })}
 
-    </table>
+      </table>
+    
+       {todos[0].node && <CreateNew createNewProp={todos[0]?.node}  /> }
+    </>
+  
+    
   );
 }
 

@@ -1,8 +1,9 @@
 import './App.css';
 import graphql from 'babel-plugin-relay/macro';
-import { useFragment, useMutation } from 'react-relay';
+import { ConnectionHandler, useFragment, useMutation } from 'react-relay';
 import { TodoFragment$key } from './__generated__/TodoFragment.graphql';
 import { RecordSourceSelectorProxy } from 'relay-runtime/lib/store/RelayStoreTypes';
+import { useState } from 'react';
 
 const TodoFragment = graphql`
   fragment TodoFragment on Todo {
@@ -20,13 +21,24 @@ const TodoMutation = graphql`
   mutation TodoMutation(
     $taskUid: UUID!,
     $completed: Boolean!,
+    $task: String!,
 
   ) @raw_response_type {
     updateTodoByTaskUid(
-      input: {todoPatch: {completed: $completed}, taskUid: $taskUid}
+      input: {todoPatch: {completed: $completed, task:$task}, taskUid: $taskUid}
     ) {
       todo {
         ...TodoFragment
+      }
+    }
+  }
+`;
+
+const DeleteTodoMutation = graphql`
+  mutation DeleteTodoMutation($taskUid: UUID!) {
+    deleteTodoByTaskUid(input: { taskUid: $taskUid }) {
+      todo {
+        taskUid
       }
     }
   }
@@ -38,24 +50,30 @@ type Props = {
 
 
 function Todo({todoProp} : Props) {
-  const todo = useFragment(
+  const fetchedTodo = useFragment(
     TodoFragment,
     todoProp,
   );
   const [commitMutation, isMutationInFlight] = useMutation(TodoMutation);
+  const [taskTxt, setTaskTxt] = useState(fetchedTodo.task);
+  const [isCompleted, setIsCompleted] = useState(fetchedTodo.completed);
+  const [deleteMutation, isDeleteMutationInFlight] = useMutation(DeleteTodoMutation);
+
   const handleOnChange = () => commitMutation({
     variables: {
-      taskUid: todo.taskUid,
-      completed: !todo.completed,
+      taskUid: fetchedTodo.taskUid,
+      completed: isCompleted,
+      task: taskTxt,
     },
-    updater: (store: RecordSourceSelectorProxy) => {
+    updater: (store: RecordSourceSelectorProxy, response: any) => {
+      console.log(response.updateTodoByTaskUid.todo)
       const payload = store.getRootField('updateTodoByTaskUid');
-      if (payload && todo) {
+      if (payload && fetchedTodo) {
         const updatedTodo = payload.getLinkedRecord('todo');
-        console.log(updatedTodo)
-        if (updatedTodo && todo.__id) {
-          const cachedTodo = store.get(todo.__id);
-          console.log(cachedTodo)
+   
+        if (updatedTodo && fetchedTodo.__id) {
+          const cachedTodo = store.get(fetchedTodo.__id);
+       
           if (cachedTodo) {
             cachedTodo.copyFieldsFrom(updatedTodo);
           }
@@ -65,18 +83,64 @@ function Todo({todoProp} : Props) {
   })
 
 
+ 
+
+  const handleDelete = () => {
+    deleteMutation({
+      variables: {
+        taskUid: fetchedTodo.taskUid,
+      },
+      updater: (store: RecordSourceSelectorProxy) => {
+        const userRecord = store.getRoot();
+        const todosConnection = ConnectionHandler.getConnection(userRecord, 'TodosQuery_allTodos');
+
+        if (todosConnection) {
+          ConnectionHandler.deleteNode(todosConnection, fetchedTodo.__id);
+        }
+      },
+    });
+  };
+
+
   return (
-    <tr style={{background:todo.completed? "green": "red"}}>
+    <tr style={{background:fetchedTodo.completed? "green": "red"}}>
+       <th>
+          {taskTxt}    
+      </th>
       <th>
         <input 
               type="checkbox" 
-              name={todo.task} 
-              checked={todo.completed ? true : false} 
-              onChange={handleOnChange}
+              name={fetchedTodo.task} 
+              checked={isCompleted ? true : false} 
+              onChange={(e) => setIsCompleted(v=>!v)}
               disabled={isMutationInFlight}
         />
+     
+          <input 
+            type="text" 
+            value={taskTxt}
+            onChange={(evt)=>setTaskTxt(evt.target.value)}
+            disabled={isMutationInFlight}
+          />
+
+          <button 
+            onClick={handleOnChange}
+            disabled={isMutationInFlight}
+            >
+              Update
+          </button>
       </th>
-      <th><label htmlFor={todo.task}> {todo.task}</label></th>
+
+      
+
+      <th>
+          <button 
+            onClick={handleDelete}
+            disabled={isDeleteMutationInFlight}
+            >
+              X
+          </button>
+      </th>
       
       
       
