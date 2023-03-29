@@ -34,7 +34,6 @@ function Todos() {
     return <>no more todos</>
   }
 
-  /* console.log(allTodos?.__id) */
 
   const todos = allTodos.edges
   console.log(todos)
