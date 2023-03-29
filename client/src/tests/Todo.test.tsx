@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import App from '../App';
 import {createMockEnvironment, MockPayloadGenerator} from 'relay-test-utils';
 import ReactTestRenderer from 'react-test-renderer'; 
-import { RelayEnvironmentProvider, useLazyLoadQuery } from 'react-relay';
+import { commitMutation, Environment, RelayEnvironmentProvider, useLazyLoadQuery } from 'react-relay';
 import graphql from 'babel-plugin-relay/macro';
 import type {TodosTestQuery as TodosTestQueryType} from './__generated__/TodosTestQuery.graphql';
 import Todo from '../Todo';
@@ -71,4 +71,50 @@ test('renders Loading', async () => {
     });
   
     expect(renderer).toMatchSnapshot();
+  });
+
+
+
+  const sendMutation = (
+    environment: Environment, 
+    onCompleted: jest.Mock<any, any>, 
+    onError: jest.Mock<any, any>, 
+    variables: {}) =>
+  commitMutation(environment, {
+    mutation: graphql`
+    mutation TodoTestMutation(
+      $taskUid: UUID!,
+      $completed: Boolean!,
+      $task: String!,
+  
+    ) @raw_response_type {
+      updateTodoByTaskUid(
+        input: {todoPatch: {completed: $completed, task:$task}, taskUid: $taskUid}
+      ) {
+        todo {
+          ...TodoFragment
+        }
+      }
+    }
+  `,
+    onCompleted,
+    onError,
+    variables,
+  });
+
+  
+  test('send mutation', () => {
+    const environment = createMockEnvironment();
+    const onCompleted = jest.fn();
+    sendMutation(environment, onCompleted, jest.fn(), {});
+    const operation = environment.mock.getMostRecentOperation();
+  
+    ReactTestRenderer.act(() => {
+      environment.mock.resolve(
+        operation,
+        MockPayloadGenerator.generate(operation)
+      );
+    });
+  
+    expect(onCompleted).toBeCalled();
   });
